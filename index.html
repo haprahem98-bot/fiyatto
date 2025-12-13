@@ -3,383 +3,197 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💰 Dolar - TL Fiyat Hesaplayıcı</title>
+<title>💰 Fiyat Hesaplayıcı</title>
+
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e9ebee; padding: 15px; color: #333; }
-  
-  /* تصميم البطاقة الرئيسية */
-  .container-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
-  
-  h2 { margin-bottom: 20px; color: #1a73e8; font-size: 28px; text-align: center; }
-  h3 { margin-top: 15px; margin-bottom: 10px; color: #1a73e8; font-size: 18px; }
+/* ========== BASE ========== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  input { padding: 12px 10px; border: 1px solid #ddd; border-radius: 8px; text-align: center; transition: all 0.3s; font-size: 15px; width: 100%; }
-  input:focus { border-color: #1a73e8; outline: none; box-shadow: 0 0 6px rgba(26,115,232,0.3); }
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: #f0f2f5;
+  color: #333;
+  padding: 20px;
+  transition: 0.3s;
+}
 
-  /* أزرار عامة */
-  button { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; background: #1a73e8; color: #fff; font-weight: 600; transition: 0.3s; font-size: 15px; }
-  button:hover { background: #155ab6; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-  
-  /* أزرار محددة */
-  button.save-btn { background: #00a153; }
-  button.save-btn:hover { background: #008947; }
-  button.clear-btn { background: #ff9800; }
-  button.clear-btn:hover { background: #e68900; }
-  button.delete-btn { background: #f44336; }
-  button.delete-btn:hover { background: #c12b1c; }
-  
-  /* شريط التحكم العلوي */
-  .control-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-  .control-buttons > * { flex-grow: 1; min-width: 150px; }
-  .control-buttons label { display: block; flex-grow: 1; }
-  
-  /* الجدول */
-  table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; overflow: hidden; font-size: 15px; border-radius: 12px; }
-  th, td { padding: 14px 10px; text-align: center; border-bottom: 1px solid #eee; }
-  th { background: #1a73e8; color: #fff; font-weight: 700; border-right: 1px solid #155ab6; }
-  th:last-child { border-right: none; }
-  td { background: #fdfdfd; }
-  td input { padding: 8px; border-radius: 4px; border: 1px solid #e0e0e0; font-size: 14px; }
-  td input:focus { border-color: #1a73e8; }
+h2, h3 { color: #1a73e8; margin-bottom: 10px; }
 
-  .total { font-weight: bold; color: #00a153; font-size: 16px; }
+input, button {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
 
-  /* قائمة النماذج المحفوظة */
-  #savedModels { margin-top: 30px; }
-  #savedModels-list { display: flex; flex-wrap: wrap; gap: 8px; }
-  #savedModels-list > div { 
-    display: flex; 
-    border: 1px solid #ccc; 
-    border-radius: 6px; 
-    overflow: hidden;
-    transition: all 0.2s;
-  }
-  #savedModels-list > div:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-  #savedModels-list button:first-child { background: #4285f4; color: #fff; border-radius: 0; }
-  #savedModels-list button:first-child:hover { background: #3367d6; }
+button {
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
 
-  /* البحث */
-  .search-container { position: relative; margin-top: 15px; }
-  #searchInput { padding-left: 40px; }
-  .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #777; font-size: 18px; }
+button:hover { background: #155ab6; }
 
-  #searchResults { 
-    border: 1px solid #ccc; 
-    background: #fff; 
-    position: absolute; 
-    max-height: 200px; 
-    overflow-y: auto; 
-    display: none; 
-    border-radius: 8px; 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-    z-index: 100; 
-    width: 100%; 
-    top: 100%;
-  }
-  #searchResults div { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #eee; }
-  #searchResults div:hover { background: #f0f2f5; }
+.control {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
 
+/* ========== TABLE (DESKTOP) ========== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
 
-  /* --------------------------------------------- */
-  /* استجابة الجوال (Mobile Responsiveness) */
-  /* --------------------------------------------- */
-  @media (max-width: 768px) {
-    body { padding: 10px; }
-    .container-card { padding: 15px; }
-    h2 { font-size: 24px; }
-    
-    /* الأزرار والحقول تكدس عموديًا */
-    .control-buttons { flex-direction: column; gap: 8px; }
-    .control-buttons > * { min-width: 100%; }
-    .control-buttons label { display: block; }
+th, td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
 
-    /* تحويل الجدول إلى تنسيق البطاقة (Card View) */
-    table { border: 0; border-radius: 0; }
-    thead { display: none; }
-    
-    tr { 
-      border: 1px solid #ddd; 
-      margin-bottom: 15px; 
-      display: block;
-      border-radius: 10px;
-      overflow: hidden;
-      background: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    td { 
-      border-bottom: 1px solid #eee;
-      display: block;
-      text-align: right;
-      padding: 10px 10px 10px 50%; /* مساحة لاسم الحقل */
-      position: relative;
-    }
-   
-    td:last-child { border-bottom: 0; text-align: center; padding: 10px; background: #f9f9f9; }
-    
-    /* عرض اسم العمود (data-label) */
-    td:before { 
-      content: attr(data-label); 
-      position: absolute;
-      left: 10px;
-      width: 45%; 
-      white-space: nowrap;
-      font-weight: bold;
-      text-align: left;
-      color: #555;
-    }
-    
-    td input { width: 100%; text-align: right; }
-    
-    #savedModels-list { flex-direction: column; }
-    #savedModels-list > div { width: 100%; }
-  }
+th { background: #1a73e8; color: #fff; }
+
+.total { color: #0a8f4d; font-weight: bold; }
+
+/* ========== CARDS (MOBILE) ========== */
+.cards { display: none; }
+
+.card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+/* ========== DARK MODE ========== */
+body.dark {
+  background: #121212;
+  color: #eee;
+}
+
+body.dark h2, body.dark h3 { color: #90caf9; }
+
+body.dark table, body.dark .card {
+  background: #1e1e1e;
+}
+
+body.dark th { background: #333; }
+
+body.dark input {
+  background: #2b2b2b;
+  color: #fff;
+  border-color: #555;
+}
+
+/* ========== PRINT ========== */
+@media print {
+  button, .control, #darkToggle { display: none; }
+  body { background: #fff; color: #000; }
+}
+
+/* ========== MOBILE ========== */
+@media (max-width: 768px) {
+  table { display: none; }
+  .cards { display: block; }
+}
 </style>
 </head>
+
 <body>
 
-<div class="container-card">
-  <h2>💰 Dolar - TL Fiyat Hesaplayıcı</h2>
+<h2>💰 Fiyat Hesaplayıcı</h2>
 
-  <div class="control-buttons">
-    <label>Model: <input type="text" id="model" placeholder="Model adı"></label>
-    <label>Dolar kuru (TL): <input type="number" id="dollarRate" value="42.290" step="0.01"></label>
-    <button type="button" onclick="saveModel()" class="save-btn">💾 Kaydet</button>
-    <button type="button" onclick="clearFields()" class="clear-btn">🧹 Temizle</button>
-  </div>
-
-  <div class="search-container">
-    <span class="search-icon">🔍</span>
-    <label>Arama: <input type="text" id="searchInput" placeholder="Model ara" oninput="showSuggestions()" autocomplete="off"></label>
-    <div id="searchResults"></div>
-  </div>
-
-  <div class="control-buttons" style="margin-top:20px; border-top: 1px solid #eee; padding-top: 15px;">
-    <button type="button" onclick="addRow()">➕ Yeni Satır / إضافة صف</button>
-  </div>
-
-</div> <div class="container-card">
-  <table>
-    <thead>
-      <tr>
-        <th>Tür</th>
-        <th>Dolar Fiyatı</th>
-        <th>TL Karşılığı</th>
-        <th>Kâr (TL)</th>
-        <th>Toplam (TL)</th>
-        <th>İşlem</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
-
-  <h3>🧮 Genel Toplam: <span id="grandTotal" style="font-size:24px; color: #00a153;">0.00</span> TL</h3>
+<div class="control">
+  <input id="model" placeholder="Model adı">
+  <input id="rate" type="number" step="0.01" value="42.29">
+  <button onclick="addRow()">➕ Satır</button>
+  <button onclick="toggleDark()" id="darkToggle">🌙</button>
+  <button onclick="window.print()">🖨️ Yazdır</button>
 </div>
 
-<div id="savedModels" class="container-card">
-  <h3>💾 Kaydedilen Modeller:</h3>
-  <div id="savedModels-list"></div>
-</div>
+<!-- TABLE -->
+<table>
+<thead>
+<tr>
+  <th>Tür</th>
+  <th>Dolar</th>
+  <th>Kâr</th>
+  <th>Toplam</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!-- CARDS -->
+<div class="cards" id="cards"></div>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC6ZpIkEi9KMErwJpw2HFK-Wj51dcP6-S0",
-    authDomain: "price-calculator-f17c7.firebaseapp.com",
-    projectId: "price-calculator-f17c7",
-    storageBucket: "price-calculator-f17c7.firebasestorage.app",
-    messagingSenderId: "541750328906",
-    appId: "1:541750328906:web:755597e8f21164492f70b3"
-  };
+<h3>🧮 Genel Toplam: <span id="grand">0</span> TL</h3>
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+<script>
+let data = [];
 
-  let rowCount = 0;
+function addRow(name="", usd=0, profit=0) {
+  data.push({name, usd, profit});
+  render();
+}
 
-  // ------------------ حفظ وتحميل سعر الدولار ------------------
-  async function loadDollarRate() {
-    const snap = await getDoc(doc(db, "settings", "dollar"));
-    if (snap.exists()) {
-      document.getElementById("dollarRate").value = snap.data().value;
-      calculateAll();
-    }
-  }
+function render() {
+  const rate = parseFloat(rateInput.value) || 0;
+  let totalAll = 0;
 
-  async function saveDollarRate(rate) {
-    await setDoc(doc(db, "settings", "dollar"), { value: rate });
-  }
+  rows.innerHTML = "";
+  cards.innerHTML = "";
 
-  document.getElementById("dollarRate").addEventListener("input", (e) => {
-    const rate = parseFloat(e.target.value);
-    if (!isNaN(rate)) {
-      saveDollarRate(rate);
-      calculateAll();
-    }
-  });
+  data.forEach((r, i) => {
+    const total = r.usd * rate + r.profit;
+    totalAll += total;
 
-  // ------------------ إضافة الصفوف ------------------
-  window.addRow = function(name="Yeni Model", usdValue=0, profitValue=0) {
-    rowCount++;
-    const tableBody = document.getElementById('tableBody');
-    const tr = document.createElement('tr');
-    
-    // إضافة data-label ليتناسب مع شاشات الجوال
-    tr.innerHTML = `
-      <td data-label="Tür"><input type="text" value="${name}" oninput="calculateAll()"></td>
-      <td data-label="Dolar Fiyatı"><input type="number" id="usd${rowCount}" value="${usdValue}" oninput="calculateAll()"></td>
-      <td data-label="TL Karşılığı" id="tl${rowCount}">0.00</td>
-      <td data-label="Kâr (TL)"><input type="number" id="profit${rowCount}" value="${profitValue}" oninput="calculateAll()"></td>
-      <td data-label="Toplam (TL)" id="total${rowCount}" class="total">0.00 TL (${name})</td>
-      <td data-label="İşlem"><button class="delete-btn" onclick="window.deleteRow(this)">🗑️ Sil</button></td>
-    `;
-    tableBody.appendChild(tr);
-    enableArrowNavigation(tr);
-    calculateAll(); // تأكد من الحساب الأولي للصف الجديد
-  };
+    // table
+    rows.innerHTML += `
+      <tr>
+        <td><input value="${r.name}" oninput="data[${i}].name=this.value"></td>
+        <td><input type="number" value="${r.usd}" oninput="data[${i}].usd=+this.value;render()"></td>
+        <td><input type="number" value="${r.profit}" oninput="data[${i}].profit=+this.value;render()"></td>
+        <td class="total">${total.toFixed(2)}</td>
+      </tr>
+    `;
 
-  window.deleteRow = function(button) {
-    button.closest('tr').remove();
-    calculateAll();
-  };
+    // card
+    cards.innerHTML += `
+      <div class="card">
+        <div class="card-row"><b>Tür</b><span>${r.name}</span></div>
+        <div class="card-row"><b>Dolar</b><span>${r.usd}</span></div>
+        <div class="card-row"><b>Kâr</b><span>${r.profit}</span></div>
+        <div class="card-row total"><b>Toplam</b><span>${total.toFixed(2)} TL</span></div>
+      </div>
+    `;
+  });
 
-  window.calculateAll = function() {
-    const rate = parseFloat(document.getElementById('dollarRate').value) || 0;
-    let grandTotal = 0;
-    document.querySelectorAll('#tableBody tr').forEach((tr) => {
-      const usd = parseFloat(tr.querySelector('input[id^="usd"]').value) || 0;
-      const profit = parseFloat(tr.querySelector('input[id^="profit"]').value) || 0;
-      const name = tr.querySelector('td:first-child input').value;
-      const tl = usd * rate;
-      const total = tl + profit;
-      
-      tr.querySelector('td[id^="tl"]').innerText = tl.toFixed(2);
-      tr.querySelector('td[id^="total"]').innerText = `${total.toFixed(2)} TL (${name})`;
-      grandTotal += total;
-    });
-    document.getElementById('grandTotal').innerText = grandTotal.toFixed(2);
-  };
+  grand.innerText = totalAll.toFixed(2);
+}
 
-  window.clearFields = function() {
-    document.getElementById('model').value = "";
-    document.getElementById('tableBody').innerHTML = "";
-    rowCount = 0;
-    addRow();
-    calculateAll();
-  };
+function toggleDark() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("dark", document.body.classList.contains("dark"));
+}
 
-  // ------------------ Firebase Models ------------------
-  window.saveModel = async function() {
-    const modelName = document.getElementById('model').value.trim();
-    if (!modelName) { alert("Lütfen model adını girin."); return; }
-    const data = { rows: [] };
-    document.querySelectorAll('#tableBody tr').forEach(tr => {
-      const name = tr.querySelector('td:first-child input').value;
-      const usd = parseFloat(tr.querySelector('input[id^="usd"]').value) || 0;
-      const profit = parseFloat(tr.querySelector('input[id^="profit"]').value) || 0;
-      data.rows.push({ name, usd, profit });
-    });
-    await setDoc(doc(db, "models", modelName), data);
-    alert(`Model "${modelName}" Firebase'e kaydedildi!`);
-    updateSavedModelsList();
-  }
+const rateInput = document.getElementById("rate");
+rateInput.oninput = render;
 
-  window.loadModel = async function(modelName) {
-    const docSnap = await getDoc(doc(db, "models", modelName));
-    if (!docSnap.exists()) { alert("Model bulunamadı!"); return; }
-    const data = docSnap.data();
-    document.getElementById('model').value = modelName;
-    document.getElementById('tableBody').innerHTML = "";
-    rowCount = 0;
-    data.rows.forEach(r => addRow(r.name, r.usd, r.profit));
-    calculateAll();
-  }
+if (localStorage.getItem("dark") === "true") toggleDark();
 
-  window.deleteModel = async function(modelName) {
-    if (!confirm(`"${modelName}" silinsin mi?`)) return;
-    await deleteDoc(doc(db, "models", modelName));
-    updateSavedModelsList();
-    alert(`"${modelName}" silindi!`);
-  }
-
-  window.updateSavedModelsList = async function() {
-    const container = document.getElementById('savedModels-list');
-    container.innerHTML = ""; // تنظيف القائمة
-    const snapshot = await getDocs(collection(db, "models"));
-    snapshot.forEach(docItem => {
-      const div = document.createElement('div');
-      
-      const btnLoad = document.createElement('button');
-      btnLoad.textContent = docItem.id;
-      btnLoad.onclick = () => loadModel(docItem.id);
-      
-      const btnDelete = document.createElement('button');
-      btnDelete.textContent = "🗑️";
-      btnDelete.className = "delete-btn";
-      btnDelete.onclick = () => deleteModel(docItem.id);
-      
-      div.appendChild(btnLoad);
-      div.appendChild(btnDelete);
-      container.appendChild(div);
-    });
-  }
-
-  window.showSuggestions = async function() {
-    const input = document.getElementById('searchInput');
-    const results = document.getElementById('searchResults');
-    const val = input.value.trim().toLowerCase();
-    results.innerHTML = "";
-    results.style.display = "none";
-    
-    if (!val) { return; }
-    
-    const snapshot = await getDocs(collection(db, "models"));
-    const models = snapshot.docs.map(d => d.id);
-    const matches = models.filter(m => m.toLowerCase().includes(val)); // تغيير إلى includes للبحث الأوسع
-    
-    if (!matches.length) { return; }
-    
-    matches.forEach(m => {
-      const div = document.createElement('div');
-      div.textContent = m;
-      div.onclick = () => { loadModel(m); input.value = m; results.style.display = "none"; };
-      results.appendChild(div);
-    });
-    
-    results.style.display = "block";
-  }
-
-  document.addEventListener('click', e => {
-    const searchContainer = document.querySelector('.search-container');
-    if (searchContainer && !searchContainer.contains(e.target)) {
-      document.getElementById('searchResults').style.display = "none";
-    }
-  });
-
-  // ------------------ Navigation with Arrow Keys & Enter ------------------
-  function enableArrowNavigation(row) {
-    const inputs = row.querySelectorAll('input');
-    inputs.forEach((input, idx) => {
-      input.addEventListener('keydown', (e) => {
-        const currentRow = input.closest('tr');
-        let colIndex = idx;
-
-        if (e.key === "ArrowRight") { e.preventDefault(); if (colIndex < inputs.length - 1) inputs[colIndex + 1].focus(); }
-        if (e.key === "ArrowLeft")  { e.preventDefault(); if (colIndex > 0) inputs[colIndex - 1].focus(); }
-        if (e.key === "ArrowDown")  { e.preventDefault(); const nextRow = currentRow.nextElementSibling; if (nextRow) nextRow.querySelectorAll('input')[colIndex].focus(); }
-        if (e.key === "ArrowUp")    { e.preventDefault(); const prevRow = currentRow.previousElementSibling; if (prevRow) prevRow.querySelectorAll('input')[colIndex].focus(); }
-        if (e.key === "Enter")      { e.preventDefault(); const nextRow = currentRow.nextElementSibling; if (nextRow) nextRow.querySelectorAll('input')[colIndex].focus(); }
-      });
-    });
-  }
-
-  // Init
-  loadDollarRate();
-  updateSavedModelsList();
-  addRow();
+addRow();
 </script>
 
 </body>
