@@ -3,293 +3,199 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💰 Fiyat Hesaplayıcı</title>
+<title>💰 Fiyat Hesaplayıcı - Mobil + Firebase</title>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-
-body{
-  font-family:Segoe UI,Tahoma;
-  background:#f0f2f5;
-  padding:15px;
-  color:#333;
-  transition:.3s
-}
-body.dark{background:#121212;color:#eee}
-
-h2,h3{color:#1a73e8;margin:10px 0}
-body.dark h2,body.dark h3{color:#90caf9}
-
-input,button{
-  padding:10px;
-  border-radius:6px;
-  border:1px solid #ccc;
-  font-size:15px
-}
-body.dark input{
-  background:#1e1e1e;
-  color:#fff;
-  border-color:#555
-}
-button{
-  background:#1a73e8;
-  color:#fff;
-  border:none;
-  cursor:pointer
-}
-button:hover{background:#155ab6}
-
-.control{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-bottom:10px
-}
-
-/* ===== SEARCH ===== */
-.search-box{position:relative;max-width:320px}
-#results{
-  position:absolute;
-  background:#fff;
-  width:100%;
-  max-height:180px;
-  overflow:auto;
-  display:none;
-  z-index:99;
-  border:1px solid #ccc;
-  border-radius:6px
-}
-#results div{
-  padding:8px;
-  cursor:pointer
-}
-#results div:hover{background:#e3f2fd}
-#results mark{
-  background:#ffeb3b;
-  padding:0 2px
-}
-body.dark #results{background:#1e1e1e;color:#fff}
-body.dark #results div:hover{background:#333}
-
-/* ===== TABLE ===== */
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px
-}
-th,td{
-  padding:10px;
-  border-bottom:1px solid #ddd;
-  text-align:center
-}
-th{background:#1a73e8;color:#fff}
-body.dark th{background:#333}
-.total{font-weight:bold;color:#0a8f4d}
-
-/* ===== CARDS ===== */
-.cards{display:none}
-.card{
-  background:#fff;
-  border-radius:10px;
-  padding:10px;
-  margin-bottom:8px;
-  box-shadow:0 2px 6px rgba(0,0,0,.15)
-}
-body.dark .card{background:#1e1e1e}
-.card-row{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:4px
-}
-
-/* ===== MOBILE ===== */
-@media(max-width:768px){
-  table{display:none}
-  .cards{display:block}
-}
-
-/* ===== PRINT ===== */
-@media print{
-  button,.search-box{display:none}
-}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Segoe UI,Tahoma;background:#f0f2f5;padding:10px}
+  h2,h3{text-align:center;color:#1a73e8;margin:10px 0}
+  input,button{width:100%;padding:10px;margin-bottom:8px;font-size:15px}
+  input{border:1px solid #ccc;border-radius:6px;text-align:center}
+  button{border:none;border-radius:6px;background:#1a73e8;color:#fff;font-weight:bold}
+  button:active{transform:scale(.98)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid #ddd;padding:6px;text-align:center}
+  th{background:#1a73e8;color:#fff}
+  .total{color:#0a8a3a;font-weight:bold}
+  .del{background:#f44336}
+  .wrap{overflow-x:auto}
+  #results{background:#fff;border:1px solid #ccc;border-radius:6px;display:none}
+  #results div{padding:8px;cursor:pointer}
+  #results div:hover{background:#eee}
 </style>
 </head>
 
 <body>
 
-<h2>💰 Dolar - TL Hesaplayıcı</h2>
+<h2>💰 Dolar - TL Fiyat Hesaplayıcı</h2>
 
-<div class="control">
-  <input id="model" placeholder="Model adı">
-  <input id="rate" type="number" value="42.29" step="0.01">
-  <button onclick="addRow()">➕ Satır</button>
-  <button onclick="saveModel()">💾 Kaydet</button>
-  <button onclick="toggleDark()">🌙</button>
-  <button onclick="window.print()">🖨️</button>
-</div>
+<input id="model" placeholder="Model adı">
+<input id="dollarRate" type="number" step="0.01">
+<input id="search" placeholder="🔍 Model ara" oninput="searchModels()">
+<div id="results"></div>
 
-<div class="search-box">
-  <input id="search" placeholder="🔍 Model ara..." autocomplete="off">
-  <div id="results"></div>
-</div>
+<button onclick="saveModel()">💾 Kaydet</button>
+<button onclick="addRow()">➕ Satır Ekle</button>
+<button onclick="clearFields()">🧹 Temizle</button>
 
+<div class="wrap">
 <table>
 <thead>
 <tr>
-  <th>Tür</th>
-  <th>Dolar</th>
-  <th>Kâr</th>
-  <th>Toplam</th>
+<th>Tür</th><th>$</th><th>TL</th><th>Kâr</th><th>Toplam</th><th>❌</th>
 </tr>
 </thead>
-<tbody id="rows"></tbody>
+<tbody id="tableBody"></tbody>
 </table>
+</div>
 
-<div class="cards" id="cards"></div>
+<h3>🧮 Genel Toplam: <span id="grandTotal">0</span> TL</h3>
 
-<h3>🧮 Genel Toplam: <span id="grand">0</span> TL</h3>
-
-<!-- ================= FIREBASE + LOGIC ================= -->
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {getFirestore,doc,setDoc,getDoc,getDocs,collection} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+/* 🔥 Firebase */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig={
- apiKey:"AIzaSyC6ZpIkEi9KMErwJpw2HFK-Wj51dcP6-S0",
- authDomain:"price-calculator-f17c7.firebaseapp.com",
- projectId:"price-calculator-f17c7"
+const firebaseConfig = {
+  apiKey: "AIzaSyC6ZpIkEi9KMErwJpw2HFK-Wj51dcP6-S0",
+  authDomain: "price-calculator-f17c7.firebaseapp.com",
+  projectId: "price-calculator-f17c7",
+  storageBucket: "price-calculator-f17c7.firebasestorage.app",
+  messagingSenderId: "541750328906",
+  appId: "1:541750328906:web:755597e8f21164492f70b3"
 };
 
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-/* ===== DATA ===== */
-let data=[];
-let allModels=[];
-let searchIndex=-1;
-let debounce=null;
-
-/* ===== ROWS ===== */
-window.addRow=function(name="",usd=0,profit=0){
-  data.push({name,usd,profit});
-  render();
+/* ================== 💲 DOLLAR (Firebase Sync) ================== */
+async function loadDollarRate(){
+  const snap = await getDoc(doc(db,"settings","dollar"));
+  if(snap.exists()){
+    dollarRate.value = snap.data().value;
+    calc();
+  }else{
+    dollarRate.value = 42.29;
+  }
 }
 
-/* ===== RENDER ===== */
-window.render=function(){
-  const rate=parseFloat(rateInput.value)||0;
-  let totalAll=0;
-  rows.innerHTML="";
-  cards.innerHTML="";
+async function saveDollarRate(rate){
+  await setDoc(
+    doc(db,"settings","dollar"),
+    { value: rate },
+    { merge:true }
+  );
+}
 
-  data.forEach((r,i)=>{
-    const total=r.usd*rate+r.profit;
-    totalAll+=total;
+let dollarTimer=null;
+dollarRate.addEventListener("input",e=>{
+  const r=parseFloat(e.target.value);
+  if(isNaN(r)) return;
+  calc();
+  clearTimeout(dollarTimer);
+  dollarTimer=setTimeout(()=>saveDollarRate(r),600);
+});
 
-    rows.innerHTML+=`
-      <tr>
-        <td><input value="${r.name}" oninput="data[${i}].name=this.value"></td>
-        <td><input type="number" value="${r.usd}" oninput="data[${i}].usd=+this.value;render()"></td>
-        <td><input type="number" value="${r.profit}" oninput="data[${i}].profit=+this.value;render()"></td>
-        <td class="total">${total.toFixed(2)}</td>
-      </tr>`;
+/* ================== TABLE ================== */
+let rowCount=0;
 
-    cards.innerHTML+=`
-      <div class="card">
-        <div class="card-row"><b>Tür</b><span>${r.name}</span></div>
-        <div class="card-row"><b>Dolar</b><span>${r.usd}</span></div>
-        <div class="card-row"><b>Kâr</b><span>${r.profit}</span></div>
-        <div class="card-row total"><b>Toplam</b><span>${total.toFixed(2)} TL</span></div>
-      </div>`;
+function addRow(name="",usd=0,profit=0){
+  rowCount++;
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td><input value="${name}" oninput="calc()"></td>
+    <td><input type="number" value="${usd}" oninput="calc()"></td>
+    <td class="tl">0</td>
+    <td><input type="number" value="${profit}" oninput="calc()"></td>
+    <td class="total">0</td>
+    <td><button class="del" onclick="this.closest('tr').remove();calc()">X</button></td>
+  `;
+  tableBody.appendChild(tr);
+  calc();
+}
+window.addRow=addRow;
+
+function calc(){
+  const rate=parseFloat(dollarRate.value)||0;
+  let sum=0;
+  document.querySelectorAll("#tableBody tr").forEach(tr=>{
+    const usd=parseFloat(tr.children[1].firstChild.value)||0;
+    const profit=parseFloat(tr.children[3].firstChild.value)||0;
+    const tl=usd*rate;
+    const total=tl+profit;
+    tr.querySelector(".tl").innerText=tl.toFixed(2);
+    tr.querySelector(".total").innerText=total.toFixed(2);
+    sum+=total;
   });
-
-  grand.innerText=totalAll.toFixed(2);
+  grandTotal.innerText=sum.toFixed(2);
 }
+window.calc=calc;
 
-/* ===== SAVE / LOAD ===== */
-window.saveModel=async function(){
-  const name=model.value.trim();
-  if(!name) return alert("Model adı gir");
-  await setDoc(doc(db,"models",name),{rows:data});
-  if(!allModels.includes(name)) allModels.push(name);
+function clearFields(){
+  tableBody.innerHTML="";
+  rowCount=0;
+  addRow();
+}
+window.clearFields=clearFields;
+
+/* ================== MODELS ================== */
+async function saveModel(){
+  if(!model.value.trim()) return alert("Model gir");
+  const rows=[];
+  document.querySelectorAll("#tableBody tr").forEach(tr=>{
+    rows.push({
+      name:tr.children[0].firstChild.value,
+      usd:+tr.children[1].firstChild.value||0,
+      profit:+tr.children[3].firstChild.value||0
+    });
+  });
+  await setDoc(doc(db,"models",model.value.trim()),{rows});
   alert("Kaydedildi");
 }
+window.saveModel=saveModel;
 
-window.loadModel=async function(name){
+async function loadModel(name){
   const snap=await getDoc(doc(db,"models",name));
   if(!snap.exists()) return;
-  data=snap.data().rows||[];
   model.value=name;
-  render();
+  tableBody.innerHTML="";
+  rowCount=0;
+  snap.data().rows.forEach(r=>addRow(r.name,r.usd,r.profit));
+  results.style.display="none";
 }
+window.loadModel=loadModel;
 
-/* ===== LOAD ALL MODELS ONCE ===== */
-async function loadAllModels(){
+/* ================== 🔍 SMART SEARCH ================== */
+async function searchModels(){
+  const q=search.value.toLowerCase();
+  results.innerHTML="";
+  if(!q){results.style.display="none";return;}
+
   const snap=await getDocs(collection(db,"models"));
-  allModels=snap.docs.map(d=>d.id);
-}
-loadAllModels();
-
-/* ===== SMART SEARCH ===== */
-const searchInput=document.getElementById("search");
-const resultsBox=document.getElementById("results");
-
-searchInput.addEventListener("input",()=>{
-  clearTimeout(debounce);
-  debounce=setTimeout(runSearch,250);
-});
-
-searchInput.addEventListener("keydown",(e)=>{
-  const items=resultsBox.querySelectorAll("div");
-  if(!items.length) return;
-
-  if(e.key==="ArrowDown"){searchIndex=(searchIndex+1)%items.length;setActive(items)}
-  if(e.key==="ArrowUp"){searchIndex=(searchIndex-1+items.length)%items.length;setActive(items)}
-  if(e.key==="Enter" && searchIndex>=0){items[searchIndex].click()}
-});
-
-function setActive(items){
-  items.forEach(i=>i.style.background="");
-  items[searchIndex].style.background="#cce0ff";
-}
-
-function runSearch(){
-  const val=searchInput.value.trim().toLowerCase();
-  resultsBox.innerHTML="";
-  searchIndex=-1;
-  if(!val){resultsBox.style.display="none";return}
-
-  const matches=allModels.filter(m=>m.toLowerCase().includes(val)).slice(0,10);
-  if(!matches.length){resultsBox.style.display="none";return}
-
-  matches.forEach(name=>{
-    const div=document.createElement("div");
-    div.innerHTML=highlight(name,val);
-    div.onclick=()=>{
-      loadModel(name);
-      resultsBox.style.display="none";
-      searchInput.value="";
-    };
-    resultsBox.appendChild(div);
+  let arr=[];
+  snap.forEach(d=>{
+    const n=d.id.toLowerCase();
+    let s=0;
+    if(n.startsWith(q)) s+=3;
+    if(n.includes(q)) s+=2;
+    if(q.split("").every(c=>n.includes(c))) s+=1;
+    if(s>0) arr.push({id:d.id,score:s});
   });
-  resultsBox.style.display="block";
+
+  arr.sort((a,b)=>b.score-a.score);
+  arr.slice(0,5).forEach(r=>{
+    const div=document.createElement("div");
+    div.textContent=r.id;
+    div.onclick=()=>loadModel(r.id);
+    results.appendChild(div);
+  });
+  results.style.display=arr.length?"block":"none";
 }
+window.searchModels=searchModels;
 
-function highlight(text,key){
-  return text.replace(new RegExp(`(${key})`,"ig"),"<mark>$1</mark>");
-}
-
-/* ===== DARK MODE ===== */
-window.toggleDark=function(){
-  document.body.classList.toggle("dark");
-  localStorage.setItem("dark",document.body.classList.contains("dark"));
-}
-
-const rateInput=document.getElementById("rate");
-rateInput.oninput=render;
-
-if(localStorage.getItem("dark")==="true") toggleDark();
-
+/* ================== INIT ================== */
+loadDollarRate();
 addRow();
 </script>
 
